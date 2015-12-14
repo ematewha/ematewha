@@ -1,0 +1,44 @@
+#! /usr/bin/python2.7
+# -*- coding: utf-8 -*-
+
+from collections import Counter
+import random
+import pymysql
+from pytagcloud import create_tag_image, create_html_data, make_tags, LAYOUT_HORIZONTAL, LAYOUTS, LAYOUT_MIX, LAYOUT_VERTICAL, LAYOUT_MOST_HORIZONTAL, LAYOUT_MOST_VERTICAL
+import pytagcloud # requires Korean font support
+import csv
+
+r = lambda: random.randint(0,255)
+color = lambda: (r(), r(), r())
+
+def get_tags(upso_nm, ntags=50):
+   # connection to mysql(aws)
+    conn = pymysql.connect(host='aws-server', port=3306, user='root', passwd='password', db='ematewha', charset ='utf8', use_unicode=True)
+    cur = conn.cursor()
+
+    # bring upso_refine.name from mysql
+    cur.execute('SELECT upso_id from keyword_caption WHERE keyword = "%s" '% upso_nm)
+    keyword = cur.fetchall()
+    print(type(keyword))
+
+    list = []
+    for n in range(len(keyword)):
+        list.append(keyword[n][0])
+
+    count = Counter(list)
+    maxnum = max(count.values())
+    #print(count)
+
+    return [{ 'color': color(), 'tag': n, 'size': 50+int(c*200/maxnum) }
+                for n, c in count.most_common(ntags)]
+
+
+csv_file = open('upso_nm.csv','rb')
+csv_reader = csv.reader(csv_file)
+for row in csv_reader:
+    #print row[0]
+    upso_nm = row[0]
+
+#upso_nm = '0000000-000-1886-이화사랑'
+    tags = get_tags(upso_nm)
+    pytagcloud.create_tag_image(tags, 'es.png', layout=LAYOUT_HORIZONTAL, fontname='Noto Sans CJK', size=(2000, 2000))
