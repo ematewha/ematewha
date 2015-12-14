@@ -1,0 +1,33 @@
+# -*- coding: utf-8 -*-
+#python xml library import
+
+import urllib
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+from xml.etree.ElementTree import parse
+
+def get_upso_nm_daehyun(i, list):
+    j = str(int(i) + 999)
+    url = 'http://openapi.sdm.go.kr:8088/access-token/xml/SeodaemunFoodHygieneBiz/'+ i + '/' + j
+    print (i)
+    root = parse(urllib.urlopen(url)).getroot()
+    if(root.find("RESULT") is not None):
+        for element in root.findall("row"):
+            if ('대현동' in element.findtext("SITE_ADDR")):
+                if  (('일반음식점' == element.findtext("SNT_COB_NM")) or ('휴게음식점' == element.findtext("SNT_COB_NM")) or ('제과점영업' == element.findtext("SNT_COB_NM"))):
+                    if (not element.findtext("DCB_YMD")):
+                        list += [element.findtext("UPSO_NM")]
+        get_upso_nm_daehyun(str(int(i)+1000), list)
+    return list
+
+
+#   print unicode(str(all_media_ids[i][2]), 'utf-8', ).encode('utf-8', 'ignore')
+list = []
+a = get_upso_nm_daehyun('1', list)
+print len(a)
+
+for i in range(len(a)):
+    print a[i]
